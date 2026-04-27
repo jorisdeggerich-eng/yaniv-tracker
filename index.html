@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Yaniv Tracker</title>
+
+<style>
+  body {
+    font-family: Inter, system-ui, Arial;
+    background: #F7F7F7;
+    margin: 0;
+    padding: 20px;
+    color: #222;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 16px;
+  }
+
+  .topbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  button {
+    flex: 1;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid #EBEBEB;
+    background: white;
+    font-weight: 600;
+  }
+
+  .primary {
+    background: #FF385C;
+    color: white;
+    border: none;
+  }
+
+  .player {
+    background: white;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #EBEBEB;
+  }
+
+  .winner {
+    border: 2px solid #00A699;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rank {
+    font-size: 14px;
+    color: #717171;
+  }
+
+  .name {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .icons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+  }
+
+  .icon-btn:hover {
+    opacity: 1;
+  }
+
+  .score {
+    font-size: 22px;
+    margin: 8px 0 12px;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #EBEBEB;
+    font-size: 16px;
+  }
+
+  .hint {
+    text-align: center;
+    font-size: 13px;
+    color: #717171;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>🎴 Yaniv Score</h1>
+<div class="hint">Enter = Punkte hinzufügen • Icons rechts</div>
+
+<div class="topbar">
+  <button class="primary" onclick="addPlayer()">+ Spieler</button>
+  <button onclick="reset()">Reset</button>
+</div>
+
+<div id="players"></div>
+
+<script>
+let players = JSON.parse(localStorage.getItem("yanivPlayers")) || [
+  {name:"Spieler 1", score:0},
+  {name:"Spieler 2", score:0},
+  {name:"Spieler 3", score:0}
+];
+
+function save(){
+  localStorage.setItem("yanivPlayers", JSON.stringify(players));
+}
+
+function render(){
+  const el = document.getElementById("players");
+  el.innerHTML = "";
+
+  let sorted = [...players].sort((a,b)=>a.score-b.score);
+
+  players.forEach((p,i)=>{
+    let rank = sorted.findIndex(x => x === p) + 1;
+
+    el.innerHTML += `
+      <div class="player ${rank === 1 ? 'winner':''}">
+        
+        <div class="header">
+          <div class="left">
+            <div class="rank">#${rank}</div>
+            <div class="name">${p.name}</div>
+          </div>
+
+          <div class="icons">
+            <button class="icon-btn" onclick="editName(${i})">✏️</button>
+            <button class="icon-btn" onclick="deletePlayer(${i})">🗑️</button>
+          </div>
+        </div>
+
+        <div class="score">${p.score} Punkte</div>
+
+        <input type="number" id="i${i}" placeholder="Punkte"
+        onkeydown="if(event.key==='Enter'){add(${i})}" />
+      </div>
+    `;
+  });
+}
+
+function add(i){
+  let input = document.getElementById("i"+i);
+  let v = input.value.trim();
+
+  if(v === "" || isNaN(v)) return;
+
+  players[i].score += parseInt(v);
+  input.value = "";
+  save();
+  render();
+}
+
+function addPlayer(){
+  if(players.length >= 6) return;
+  players.push({name:"Neuer Spieler", score:0});
+  save();
+  render();
+}
+
+function deletePlayer(i){
+  if(players.length <= 1) return;
+  if(confirm("Spieler löschen?")){
+    players.splice(i,1);
+    save();
+    render();
+  }
+}
+
+function reset(){
+  players.forEach(p=>p.score=0);
+  save();
+  render();
+}
+
+function editName(i){
+  let newName = prompt("Neuer Name:", players[i].name);
+  if(newName){
+    players[i].name = newName;
+    save();
+    render();
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
